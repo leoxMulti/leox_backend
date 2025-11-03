@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 8000;
 
 
 const allowedOrigin = "https://leox-multi.vercel.app"; 
-// const allowedOrigin = "http://192.168.1.100:3000"; 
+
 
 const corsOptions = {
   origin: allowedOrigin,
