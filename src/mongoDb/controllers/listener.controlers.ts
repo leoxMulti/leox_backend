@@ -1,7 +1,7 @@
 import { Bid, Fee, NFT } from '../schemas/marketplace.schema';
 import { createEthContract } from '../../config/bsc.service';
 import { io } from '../../index';
-import { newBuyer, syncSingleNFT } from './nft.controlers';
+import { newBuyer, syncSingleNFT, unListedNFT } from './nft.controlers';
 import { findNFT } from './userInfo.controlers';
 import {
   bids,
@@ -26,7 +26,33 @@ export async function startNFTListener() {
       console.error('❌ Error syncing new NFT:', error);
     }
   });
-
+  contract.on('TokenUnlisted', async (tokenId, seller,event) => {
+    try {
+      console.log(`🎨 nft unListed: ${tokenId}, Seller: ${seller}`);
+      const tranformedNft = await unListedNFT({tokenId:tokenId.toString(),seller});
+      io.emit("unListed",{
+        tokenId:tranformedNft.tokenId,
+        seller:tranformedNft.seller,
+        isListed:tranformedNft.isListed,
+        
+      })
+    } catch (error) {
+      console.error('❌ Error syncing new NFT:', error);
+    }
+  });
+  contract.on('AuctionStarted', async (tokenId, minPrice, endTime, event) => {
+    try {
+      const seller = (await event.log.getTransaction()).from.toLowerCase();
+      console.log(`🎨 New NFT Listed! Token ID: ${tokenId}, Seller: ${seller}, Price: ${minPrice}`);
+      const transformedNFT = await syncSingleNFT({
+        tokenId: tokenId.toString(),
+        address: seller,
+      });
+      io.emit('newNFTListed', transformedNFT);
+    } catch (error) {
+      console.error('❌ Error syncing new NFT:', error);
+    }
+  });
   //  update fee listen
 
   contract.on('UpdateFee', async (newFee, timestamp, event) => {
@@ -86,7 +112,7 @@ export async function startNFTListener() {
       }
       const tokenStr = tokenId.toString();
       const newRemaining = nft.remainingSupply - Number(quantity);
-
+//update nft data 
       const update = {
         $set: {
           remainingSupply: newRemaining,
@@ -113,6 +139,7 @@ export async function startNFTListener() {
         quantity: quantity.toString(),
         totalPrice: totalPrice.toString(),
         remainingSupply: newRemaining,
+        isListed : updatedNFT.isListed,
         buyerNFT,
       });
       console.log('updatedNFT', updatedNFT);

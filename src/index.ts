@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 8000;
 
 
 const allowedOrigin = "https://leox-multi.vercel.app"; 
-// const allowedOrigin = "http://192.168.19.43:3000"; 
+// const allowedOrigin = "http://192.168.1.100:3000"; 
 
 const corsOptions = {
   origin: allowedOrigin,
@@ -45,7 +45,7 @@ const httpServer = createServer(app);
 export const io = new Server(httpServer, {
   cors: { 
     origin: "https://leox-multi.vercel.app",
-    // origin: "http://192.168.19.43:3000",
+    // origin: "http://192.168.1.100:3000",
     methods: ["GET", "POST"],
     credentials: true,
    },
